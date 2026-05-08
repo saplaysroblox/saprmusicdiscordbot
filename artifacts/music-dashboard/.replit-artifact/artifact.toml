@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Music Bot Dashboard"
+version = "1.0.0"
+id = "artifacts/music-dashboard"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20403
+
+[services.development]
+run = "pnpm --filter @workspace/music-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/music-dashboard", "run", "build" ]
+publicDir = "artifacts/music-dashboard/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20403"
+BASE_PATH = "/"

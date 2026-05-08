@@ -1,0 +1,704 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Discord Music Bot Dashboard API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: player
+    description: Music player control
+  - name: queue
+    description: Queue management
+  - name: search
+    description: Music search
+  - name: guilds
+    description: Discord guild/server info
+  - name: settings
+    description: Bot settings
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /guilds:
+    get:
+      operationId: listGuilds
+      tags: [guilds]
+      summary: List all guilds the bot is in
+      responses:
+        "200":
+          description: List of guilds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Guild"
+
+  /guilds/{guildId}/player:
+    get:
+      operationId: getPlayer
+      tags: [player]
+      summary: Get current player state for a guild
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Player state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerState"
+        "404":
+          description: No active player
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /guilds/{guildId}/player/play:
+    post:
+      operationId: playTrack
+      tags: [player]
+      summary: Play a track (by URL or search query)
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayRequest"
+      responses:
+        "200":
+          description: Track queued/playing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /guilds/{guildId}/player/pause:
+    post:
+      operationId: pausePlayer
+      tags: [player]
+      summary: Pause or resume the player
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Player state updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerState"
+
+  /guilds/{guildId}/player/skip:
+    post:
+      operationId: skipTrack
+      tags: [player]
+      summary: Skip the current track
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Skipped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerState"
+
+  /guilds/{guildId}/player/stop:
+    post:
+      operationId: stopPlayer
+      tags: [player]
+      summary: Stop playback and clear queue
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerState"
+
+  /guilds/{guildId}/player/volume:
+    post:
+      operationId: setVolume
+      tags: [player]
+      summary: Set player volume
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VolumeRequest"
+      responses:
+        "200":
+          description: Volume updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerState"
+
+  /guilds/{guildId}/player/seek:
+    post:
+      operationId: seekTrack
+      tags: [player]
+      summary: Seek to a position in the current track
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeekRequest"
+      responses:
+        "200":
+          description: Seeked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerState"
+
+  /guilds/{guildId}/queue:
+    get:
+      operationId: getQueue
+      tags: [queue]
+      summary: Get the current queue for a guild
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Queue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueResponse"
+
+  /guilds/{guildId}/queue/shuffle:
+    post:
+      operationId: shuffleQueue
+      tags: [queue]
+      summary: Shuffle the queue
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Queue shuffled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueResponse"
+
+  /guilds/{guildId}/queue/loop:
+    post:
+      operationId: setLoopMode
+      tags: [queue]
+      summary: Set loop mode (none, track, queue)
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoopRequest"
+      responses:
+        "200":
+          description: Loop mode updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerState"
+
+  /guilds/{guildId}/queue/{index}:
+    delete:
+      operationId: removeFromQueue
+      tags: [queue]
+      summary: Remove a track from the queue by index
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: index
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Track removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueResponse"
+
+  /search:
+    get:
+      operationId: searchTracks
+      tags: [search]
+      summary: Search for tracks
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [youtube, soundcloud, spotify, ytsearch, scsearch]
+            default: ytsearch
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+
+  /guilds/{guildId}/settings:
+    get:
+      operationId: getGuildSettings
+      tags: [settings]
+      summary: Get guild bot settings
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildSettings"
+    put:
+      operationId: updateGuildSettings
+      tags: [settings]
+      summary: Update guild bot settings
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuildSettingsUpdate"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildSettings"
+
+  /stats:
+    get:
+      operationId: getBotStats
+      tags: [guilds]
+      summary: Get overall bot statistics
+      responses:
+        "200":
+          description: Bot stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStats"
+
+  /history:
+    get:
+      operationId: getPlayHistory
+      tags: [player]
+      summary: Get recent play history across all guilds
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Play history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HistoryEntry"
+
+  /node/status:
+    get:
+      operationId: getNodeStatus
+      tags: [health]
+      summary: Get Lavalink node connection status
+      responses:
+        "200":
+          description: Node status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeStatus"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required: [error]
+
+    Guild:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        memberCount:
+          type: integer
+        hasActivePlayer:
+          type: boolean
+      required: [id, name, memberCount, hasActivePlayer]
+
+    Track:
+      type: object
+      properties:
+        encoded:
+          type: string
+        identifier:
+          type: string
+        title:
+          type: string
+        author:
+          type: string
+        duration:
+          type: integer
+        thumbnail:
+          type: string
+          nullable: true
+        uri:
+          type: string
+          nullable: true
+        sourceName:
+          type: string
+        isStream:
+          type: boolean
+        requestedBy:
+          type: string
+          nullable: true
+      required: [encoded, identifier, title, author, duration, sourceName, isStream]
+
+    PlayerState:
+      type: object
+      properties:
+        guildId:
+          type: string
+        isPlaying:
+          type: boolean
+        isPaused:
+          type: boolean
+        volume:
+          type: integer
+        position:
+          type: integer
+        loopMode:
+          type: string
+          enum: [none, track, queue]
+        currentTrack:
+          $ref: "#/components/schemas/Track"
+          nullable: true
+        voiceChannelId:
+          type: string
+          nullable: true
+        voiceChannelName:
+          type: string
+          nullable: true
+        queueSize:
+          type: integer
+        nodeConnected:
+          type: boolean
+      required: [guildId, isPlaying, isPaused, volume, position, loopMode, queueSize, nodeConnected]
+
+    QueueResponse:
+      type: object
+      properties:
+        guildId:
+          type: string
+        tracks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Track"
+        totalDuration:
+          type: integer
+      required: [guildId, tracks, totalDuration]
+
+    PlayRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        source:
+          type: string
+          enum: [youtube, soundcloud, spotify, ytsearch, scsearch]
+          default: ytsearch
+        voiceChannelId:
+          type: string
+      required: [query]
+
+    PlayResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        track:
+          $ref: "#/components/schemas/Track"
+          nullable: true
+        playlistName:
+          type: string
+          nullable: true
+        tracksAdded:
+          type: integer
+      required: [success, message, tracksAdded]
+
+    VolumeRequest:
+      type: object
+      properties:
+        volume:
+          type: integer
+          minimum: 0
+          maximum: 200
+      required: [volume]
+
+    SeekRequest:
+      type: object
+      properties:
+        position:
+          type: integer
+      required: [position]
+
+    LoopRequest:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [none, track, queue]
+      required: [mode]
+
+    SearchResponse:
+      type: object
+      properties:
+        loadType:
+          type: string
+        tracks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Track"
+        playlistName:
+          type: string
+          nullable: true
+      required: [loadType, tracks]
+
+    GuildSettings:
+      type: object
+      properties:
+        guildId:
+          type: string
+        prefix:
+          type: string
+        defaultVolume:
+          type: integer
+        djRoleId:
+          type: string
+          nullable: true
+        textChannelId:
+          type: string
+          nullable: true
+        autoplay:
+          type: boolean
+        announceNowPlaying:
+          type: boolean
+      required: [guildId, prefix, defaultVolume, autoplay, announceNowPlaying]
+
+    GuildSettingsUpdate:
+      type: object
+      properties:
+        prefix:
+          type: string
+        defaultVolume:
+          type: integer
+        djRoleId:
+          type: string
+          nullable: true
+        textChannelId:
+          type: string
+          nullable: true
+        autoplay:
+          type: boolean
+        announceNowPlaying:
+          type: boolean
+
+    BotStats:
+      type: object
+      properties:
+        guildCount:
+          type: integer
+        activePlayers:
+          type: integer
+        totalTracksPlayed:
+          type: integer
+        uptimeMs:
+          type: integer
+        nodeConnected:
+          type: boolean
+        memoryUsageMb:
+          type: number
+      required: [guildCount, activePlayers, totalTracksPlayed, uptimeMs, nodeConnected, memoryUsageMb]
+
+    HistoryEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        guildId:
+          type: string
+        guildName:
+          type: string
+          nullable: true
+        title:
+          type: string
+        author:
+          type: string
+        duration:
+          type: integer
+        thumbnail:
+          type: string
+          nullable: true
+        uri:
+          type: string
+          nullable: true
+        sourceName:
+          type: string
+        playedAt:
+          type: string
+          format: date-time
+        requestedBy:
+          type: string
+          nullable: true
+      required: [id, guildId, title, author, duration, sourceName, playedAt]
+
+    NodeStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        host:
+          type: string
+        port:
+          type: integer
+        players:
+          type: integer
+        playingPlayers:
+          type: integer
+        uptime:
+          type: integer
+        memoryFree:
+          type: integer
+        memoryUsed:
+          type: integer
+        cpuCores:
+          type: integer
+        cpuLoad:
+          type: number
+      required: [connected, host, port, players, playingPlayers]
