@@ -14,11 +14,11 @@ if (!databaseUrl) {
 const pool = new Pool({ connectionString: databaseUrl });
 const db = drizzle(pool);
 
-const migrationsFolder = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "drizzle",
-);
+// MIGRATIONS_DIR can be set explicitly (e.g. in Docker).
+// Fallback: relative to this source file (works in dev via tsx).
+const migrationsFolder =
+  process.env.MIGRATIONS_DIR ??
+  path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "drizzle");
 
 console.log("Running migrations from:", migrationsFolder);
 await migrate(db, { migrationsFolder });
